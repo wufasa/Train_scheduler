@@ -35,7 +35,7 @@ $(document).ready(function(){
             if(startTime[0] >= 24) throw "not a valid number";
             if(startTime[1] > 60) throw "not a valid number";
             if(isNaN(frequency)) throw "undefined frequency";
-            database.ref().push({
+            database.ref(name).push({
             name: name,
             destination: destination,
             startTime: startTime,
@@ -62,12 +62,16 @@ $(document).ready(function(){
 
 
     //push 
-    //Append to schedule
+    //Append to schedule    
 
     database.ref().on("child_added", function(snapshot) {
-        // storing the snapshot.val() in a variable for convenience
-        var sv = snapshot.val();
+//        console.log(Object.keys(snapshot.val()));
+//        console.log(snapshot.val());
+        var key = Object.keys(snapshot.val());
+//        console.log(snapshot.val()[key].name);
+        var sv = snapshot.val()[key];
         var ampm = "AM";
+        var name = sv.name;
         // Change the HTML to reflect
         var curH = parseInt(moment().format("h")); 
         var curMM = parseInt(moment().format("mm"));
@@ -92,26 +96,38 @@ $(document).ready(function(){
 
         }
         nextTrainTimeH = Math.floor(startT/60) % 24;
-        console.log(nextTrainTimeH);
+//        console.log(nextTrainTimeH);
         if(nextTrainTimeH > 11){ //Change to PM
             nextTrainTimeH = nextTrainTimeH - 12;
-            console.log("nextTrainh: " + nextTrainTimeH);
+//            console.log("nextTrainh: " + nextTrainTimeH);
             var ampm = "PM";
         }
         nextTrainTimeMM = startT % 60; //edge case
-        if (nextTrainTimeMM == 0){
-            nextTrainTimeMM = "00";
+        if (nextTrainTimeMM < 10){
+            nextTrainTimeMM = "0" + nextTrainTimeMM;
         }
         var row = $("<tr>");
+        var delBtn = $("<button>");
+        delBtn.attr("id","delete");
+        delBtn.text("Delete")
+        delBtn.addClass(name);
+        delBtn.val(name);
+//        console.log(delBtn.val());
         row.append($("<td>" + sv.name + "</td>"));
         row.append($("<td>" + sv.destination + "</td>"));
         row.append($("<td>" + sv.frequency + "</td>"));
         row.append($("<td>" + nextTrainTimeH + ":" + nextTrainTimeMM + ampm + "</td>"));
         row.append($("<td>" + nextTrainTime + "</td>"));
+        row.append(delBtn);
         $(".table-body").append(row);
-
         // Handle the errors
     }, function(errorObject) {
         console.log("Errors handled: " + errorObject.code);
     });
+    
+    
+    $(document).on("click", "#delete", function(){
+        database.ref(this.value).remove();
+        location.reload();
+    })
 })
